@@ -3,18 +3,25 @@ import {connect} from 'react-redux';
 import * as productActions from '../../actions/productActions';
 import ProductList from './ProductList';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import TotalTable from './TotalTable'
 
-
-class ProductPage extends React.Component {  
+export default class ProductPage extends React.Component {  
   render() {
+    const style={
+      float:"right"
+    }
     return(
       <MuiThemeProvider>
-      <div className="col-lg-12">
-        <h1>My Cart</h1>
+        <div className="container">
+          <h1>My Cart</h1>
         <div className="col-lg-10">
-          <ProductList products={this.props.products} />
+          <ProductList  />
+        </div>
+        <div className="col-lg-3" style={style}>
+          <TotalTable />
         </div>
       </div>
+      
       </MuiThemeProvider>
     );
   }
@@ -24,11 +31,3 @@ class ProductPage extends React.Component {
 ProductPage.propTypes = {
    products: PropTypes.array.isRequired
 };
-
-function mapStateToProps(state, ownProps) {
-  return {
-    products: state.products
-  };
-} 
-
-export default connect(mapStateToProps)(ProductPage);

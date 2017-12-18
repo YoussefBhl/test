@@ -1,68 +1,65 @@
 import React, {PropTypes} from 'react';
 import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import { addProduct, deleteProduct, updateProduct} from '../../actions/productActions';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux'; 
 class ProductList extends React.Component {  
-  
+  constructor(props) {
+    super(props,);
+    this.state = {
+      products: this.props.products.products
+    };
+  }
   render(){
-    const { products } = this.props; 
+    //const { prod } = this.props;
+    //const products = this.props.products.products;
     //calculate the Total price for each product
-    products.map(product => product["total"]= (product.price+product.price*product.tax/100));
+    this.state.products.map((row) => row.total = row.price * (1 + row.tax/100));
+    const componentContext = this;
     // withoutNoDataText: true, // this will make the noDataText hidden, means only showing the table header
     const options = {
       noDataText: 'This is custom text for empty data',
-      afterInsertRow: handleInsertedRow, // a hook after add row
-      afterDeleteRow: handleDeletedRow,  // a hook after delete row
+      afterInsertRow: handleInsertedRow.bind(componentContext), // a hook after add row
+      afterDeleteRow: handleDeletedRow.bind(componentContext),  // a hook after delete row
     };
     const cellEditProp = {
       mode: 'dbclick',
       blurToSave: true,
-       beforeSaveCell: handleBeforeSaveCell, // a hook for before saving cell
-      afterSaveCell: handleAfterSaveCell // a hook after saving cell
+      afterSaveCell: handleAfterSaveCell.bind(componentContext), // a hook for before saving cell
     };
-
-    function handleAfterSaveCell(row, cellName, cellValue, done) {
-      this.props.actions.updateProduct(row);
-      console.log(row)
-      console.log(cellName)
-      console.log(cellValue)
-    }
-    function handleBeforeSaveCell(row, cellName, cellValue, done) {
-      console.log(row)
+    function handleAfterSaveCell(row) {
+      //parse the price and the tax to float
+      row.price = parseFloat(row.price);
+      row.tax = parseFloat(row.tax);
+      row.id = parseFloat(row.id);
+      this.props.updateProduct(row)
     }
     function handleInsertedRow(row) {
+      //parse the price and the tax to float
+      row.price = parseFloat(row.price);
+      row.tax = parseFloat(row.tax); 
+      row.id = parseFloat(row.id);
+      this.props.addProduct(row);
       //calculate the new row total
-      row["total"]= (parseFloat(row.price)+parseFloat(row.price)*parseFloat(row.tax)/100);
-      console.log(row)
+      row.total = (row.price + row.price * row.tax) / 100;
     }
     function handleDeletedRow(rowKeys) {
-      console.log(rowKeys)
+      this.props.deleteProduct(rowKeys);
     }
     //show the price total with 2 degits after comma and add euro char
-    function priceFormatter(cell, row){
-      return parseFloat(cell).toFixed(2).replace('.',',')+' €';
+    const priceFormatter = cell => {
+      cell = cell.toString();
+      return cell.slice(0, (cell.indexOf("."))+3) + ' €';
     }
     //add '%' to Tax
-    function priceTax(cell, row){
-      return cell+' %';
-    }
+    const priceTax = cell => cell + ' %';
     //validate the new row id 
-    function idValidator(value){
-      const nan = isNaN(parseInt(value, 10));
-      if (nan) {
-        return 'id must be a integer!';
-      }
-      return true;
-    } 
-    function floatValidator(value){
-      const nan = isNaN(parseFloat(value, 10));
-      if (nan) {
-        return 'Price/Tax must be a float!';
-      }
-      return true;
-    } 
+    const idValidator = value => isNaN(parseInt(value, 10)) ? 'id must be a integer!' : true;
+    const floatValidator = value => isNaN(parseFloat(value, 10)) ? 'Price/Tax must be a float!' : true;
     return (
         
       <BootstrapTable className="table" deleteRow={ true } selectRow={ { mode: 'checkbox' } }cellEdit={cellEditProp} 
-      data={products}  hover={true} options={options} insertRow>
+      data={this.state.products}  hover={true} options={options} insertRow>
         <TableHeaderColumn dataField="id" editable={{validator: idValidator}} isKey={true} dataAlign="center" dataSort={true}>ID</TableHeaderColumn>
         <TableHeaderColumn dataField="name" dataSort={true}>Name</TableHeaderColumn>
         <TableHeaderColumn dataField="comment" dataSort={true}>Comments</TableHeaderColumn>
@@ -79,4 +76,14 @@ ProductList.propTypes = {
   products: PropTypes.array.isRequired
 };
 
-export default ProductList;  
+function mapDispatchToProps(dispatch) {
+  return bindActionCreators({addProduct: addProduct, deleteProduct: deleteProduct, updateProduct: updateProduct}, dispatch)
+}
+function mapStateToProps (state) {
+  return {
+    products: state.products
+  };
+}
+
+
+export default connect(mapStateToProps, mapDispatchToProps) (ProductList);
