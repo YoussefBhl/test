@@ -5,7 +5,7 @@ class TotalTable extends React.Component {
   
   render(){
       const products = this.props.products.products
-      let titles = ['Net Total','Tax'];
+      //splitTax takes all the products and return the taxs and it price
       const splitTax= products => {
           let sameTaxSum = 0;
           if(!products.length) return [];
@@ -17,6 +17,7 @@ class TotalTable extends React.Component {
           else  sameTaxSum = samTaxproducts.reduce((a,b) => (a.price*a.tax+b.price*b.tax)/100);
           return [{tax:products[0].tax,sum:sameTaxSum}].concat(splitTax(products.filter(x => x.tax != products[0].tax)))
       }
+      //calculate the Net total
       let netTotal = () => {
         if(!products.length) return 0
         return products.map(x => x.price).reduce((a,b) => a+b)//calculate Net total
@@ -26,7 +27,7 @@ class TotalTable extends React.Component {
           if(!products.length) return 0
           return tax.map(x => x.sum).reduce((a,b)=> a+b);
       } 
-       //show the price total with 2 degits after comma and add euro char
+       //show the price with 2 degits after comma and add euro char
        const priceFormatter = cell => {
         cell = cell.toString();
         return cell.slice(0, (cell.indexOf("."))+3) + ' €';
